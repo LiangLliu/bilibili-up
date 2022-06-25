@@ -26,19 +26,25 @@ def init_config():
     user_id = config["userId"]
 
 
-def get_bvids_with_mid(mid):
-    response = requests.get(get_bvid_url, params={
-        'mid': mid, "pn": pn, "ps": ps})
+def get_video_list_mid(mid):
+    videos = []
+    index = 1
+    while True:
+        response = requests.get(get_bvid_url, params={'mid': mid, "pn": index, "ps": ps})
 
-    ss = json.loads(response.text)
-    print("\nRequest Code: %s, message %s" % (ss["code"], ss["message"]))
-    print("---------video list---------------")
-    video_bvids = []
-    vlist = ss["data"]["list"]["vlist"]
-    for item in vlist:
-        print(item["bvid"])
-        video_bvids.append(item["bvid"])
-    return video_bvids
+        ss = json.loads(response.text)
+        if len(ss["data"]["list"]["vlist"]) < 1:
+            break
+        print("\nRequest Code: %s, message %s" % (ss["code"], ss["message"]))
+        print("---------video list---------------")
+
+        vlist = ss["data"]["list"]["vlist"]
+        for item in vlist:
+            print(item["bvid"])
+            videos.append(item["bvid"])
+        index = index + 1
+    print(len(videos))
+    return videos
 
 
 def get_request_data(bvid):
@@ -77,14 +83,18 @@ def get_video_view_number(bvid):
 def build_request_headers(bvid):
     # 首先先定义它的headers，在我们点击视频的时候，查看它的xhr，然后我们就可以找到它的对应cookie了，因为怎么获取播放量和cookie有关
     request_headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/94.0.4606.81 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,'
+                  'application/signed-exchange;v=b3;q=0.9',
         'accept-language': 'zh-CN,zh;q=0.9',
         'accept-encoding': 'gzip, deflate, br',
         'origin': 'https://www.bilibili.com',
         'Connection': 'keep-alive',
         'referer': 'https://www.bilibili.com/video/' + bvid,
-        "cookie": "_uuid=3FE3CF83-B9E8-4146-0B1A-715E4448B57157957infoc; buvid3=643B48AA-19CF-4768-AFAC-E4C72BAE9512148806infoc; CURRENT_BLACKGAP=1; CURRENT_FNVAL=80; CURRENT_QUALITY=0; sid=iir8gxre; rpdid=|(J~J|R~JlRl0J'uYJlYuRRYk"
+        "cookie": "_uuid=3FE3CF83-B9E8-4146-0B1A-715E4448B57157957infoc; "
+                  "buvid3=643B48AA-19CF-4768-AFAC-E4C72BAE9512148806infoc; CURRENT_BLACKGAP=1; CURRENT_FNVAL=80; "
+                  "CURRENT_QUALITY=0; sid=iir8gxre; rpdid=|(J~J|R~JlRl0J'uYJlYuRRYk "
     }
     return request_headers
 
@@ -124,7 +134,7 @@ def request_videos(video_bvids):
 
 if __name__ == '__main__':
     init_config()
-    video_bvids = get_bvids_with_mid(user_id)
-    for i in range(20):
-        request_videos(video_bvids)
+    video_list = get_video_list_mid(user_id)
+    for i in range(200):
+        request_videos(video_list)
         time.sleep(exception_sleep_time_seconds)
